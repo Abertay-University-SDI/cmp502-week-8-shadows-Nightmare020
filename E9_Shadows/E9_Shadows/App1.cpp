@@ -186,10 +186,12 @@ void App1::depthPass()
 
 	if (usePerspectiveProjection)
 	{
+		light->generateProjectionMatrix(0.1f, 100.f);
 		lightProjectionMatrix = light->getProjectionMatrix();
 	}
 	else
 	{
+		//light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 		lightProjectionMatrix = light->getOrthoMatrix();
 	}
 
@@ -289,6 +291,7 @@ void App1::finalPass()
 
 	if (usePerspectiveProjection)
 	{
+		light->generateProjectionMatrix(0.1f, 100.f);
 		lightProjectionMatrix = light->getProjectionMatrix();
 	}
 	else

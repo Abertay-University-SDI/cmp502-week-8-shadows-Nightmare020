@@ -44,7 +44,9 @@ bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
     float depthValue = sMap.Sample(shadowSampler, uv).r;
 	// Calculate the depth from the light.
     float lightDepthValue = lightViewPosition.z / lightViewPosition.w;
-    lightDepthValue -= bias;
+    
+    // Adjust depth bias for perspective projection (scale by distance from the light)
+    lightDepthValue -= bias * (1.0f / lightViewPosition.w);
 
 	// Compare the depth of the shadow map value and the depth of the light to determine whether to shadow or to light this pixel.
     if (lightDepthValue < depthValue)
@@ -83,6 +85,7 @@ float4 main(InputType input) : SV_TARGET
         }
     }
     
+    // Combine lightning with ambient and texture
     colour = saturate(colour + ambient);
     return saturate(colour) * textureColour;
 }
