@@ -182,17 +182,12 @@ void App1::depthPass()
 	// get the world, view, and projection matrices from the camera and d3d objects.
 	light->generateViewMatrix();
 	XMMATRIX lightViewMatrix = light->getViewMatrix();
-	XMMATRIX lightProjectionMatrix;
+	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
 
 	if (usePerspectiveProjection)
 	{
 		light->generateProjectionMatrix(0.1f, 100.f);
 		lightProjectionMatrix = light->getProjectionMatrix();
-	}
-	else
-	{
-		//light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
-		lightProjectionMatrix = light->getOrthoMatrix();
 	}
 
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
@@ -287,16 +282,12 @@ void App1::finalPass()
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
-	XMMATRIX lightProjectionMatrix;
+	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
 
 	if (usePerspectiveProjection)
 	{
 		light->generateProjectionMatrix(0.1f, 100.f);
 		lightProjectionMatrix = light->getProjectionMatrix();
-	}
-	else
-	{
-		lightProjectionMatrix = light->getOrthoMatrix();
 	}
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
