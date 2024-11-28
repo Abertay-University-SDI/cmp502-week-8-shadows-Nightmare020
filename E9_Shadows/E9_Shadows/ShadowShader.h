@@ -26,7 +26,10 @@ private:
 		XMFLOAT4 ambient;
 		XMFLOAT4 diffuse;
 		XMFLOAT3 direction;
-		float padding;
+		float padding1;
+		XMFLOAT4 specularColour;
+		float specularPower;
+		XMFLOAT3 padding2;
 	};
 
 public:
@@ -34,7 +37,8 @@ public:
 	ShadowShader(ID3D11Device* device, HWND hwnd);
 	~ShadowShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX &lightProjection);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, 
+		ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX &lightProjection);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
