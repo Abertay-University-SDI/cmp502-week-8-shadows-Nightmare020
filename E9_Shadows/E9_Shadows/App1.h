@@ -62,6 +62,8 @@ private:
 	XMFLOAT3 lightPosition;
 	float lightAmbientIntensity = 0.3;
 	float lightDiffuseIntensity = 1.0f;
+	XMFLOAT4 lightSpecularColour = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	float lightSpecularPower = 0.0f;
 	bool usePerspectiveProjection = false; // Default to orthographic
 };
 

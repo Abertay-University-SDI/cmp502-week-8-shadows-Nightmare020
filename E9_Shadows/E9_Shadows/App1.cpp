@@ -57,7 +57,9 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setDirection(0.0f, -0.7f, 0.7f);
-	light->setPosition(0.f, 0.f, -10.f);
+	light->setPosition(0.f, 15.f, -10.f);
+	light->setSpecularColour(0.0f, 0.0f, 0.0f, 1.0f);
+	light->setSpecularPower(0.0f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
 	// Configure sphere light for debug
@@ -392,6 +394,12 @@ void App1::gui()
 
 	ImGui::SliderFloat("Diffuse Intensity", &lightDiffuseIntensity, 0.0f, 1.0f);
 	light->setDiffuseColour(lightDiffuseIntensity, lightDiffuseIntensity, lightDiffuseIntensity, 1.0f);
+
+	ImGui::SliderFloat4("Specular Colour", (float*)&lightSpecularColour, 0.0f, 1.0f);
+	light->setSpecularColour(lightSpecularColour.x, lightSpecularColour.y, lightSpecularColour.z, 1.0f);
+
+	ImGui::SliderFloat("Specular Power", &lightSpecularPower, 0.0f, 1.0f);
+	light->setSpecularPower(lightSpecularPower);
 
 	// End ImGui
 	ImGui::End();

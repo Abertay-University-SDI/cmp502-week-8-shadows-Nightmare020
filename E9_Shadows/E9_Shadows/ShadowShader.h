@@ -26,7 +26,10 @@ private:
 		XMFLOAT4 ambient;
 		XMFLOAT4 diffuse;
 		XMFLOAT3 direction;
-		float padding;
+		float padding1;
+		XMFLOAT4 specularColour;
+		float specularPower;
+		XMFLOAT3 padding2;
 	};
 
 public:

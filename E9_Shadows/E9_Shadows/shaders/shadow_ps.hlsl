@@ -10,6 +10,10 @@ cbuffer LightBuffer : register(b0)
 	float4 ambient;
 	float4 diffuse;
 	float3 direction;
+    float padding1;
+    float4 specularColour;
+    float specularPower;
+    float3 padding2;
 };
 
 struct InputType
@@ -18,6 +22,7 @@ struct InputType
     float2 tex : TEXCOORD0;
 	float3 normal : NORMAL;
     float4 lightViewPos : TEXCOORD1;
+    float3 viewVector : TEXCOORD2;
 };
 
 // Calculate lighting intensity based on direction and normal. Combine with light colour.
@@ -26,6 +31,14 @@ float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
     float intensity = saturate(dot(normal, lightDirection));
     float4 colour = saturate(diffuse * intensity);
     return colour;
+}
+
+float4 calculateSpecular(float3 lightDirection, float3 normal, float3 viewVector, float4 specularColour, float specularPower)
+{
+	// Blinn-phong specular calculation
+    float3 halfway = normalize(lightDirection + viewVector);
+    float specularIntensity = pow(max(dot(normal, halfway), 0.f), specularPower);
+    return saturate(specularColour * specularIntensity);
 }
 
 // Is the gemoetry in our shadow map
@@ -67,8 +80,10 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float shadowMapBias = 0.005f;
+    float cosTheta = abs(dot(input.normal, -direction));
+    float shadowMapBias = 0.005 / max(cosTheta, 0.1f);
     float4 colour = float4(0.f, 0.f, 0.f, 1.f);
+    float4 specular = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 
 	// Calculate the projected texture coordinates.
@@ -82,10 +97,13 @@ float4 main(InputType input) : SV_TARGET
         {
             // is NOT in shadow, therefore light
             colour = calculateLighting(-direction, input.normal, diffuse);
+            
+            // Add specular colour
+            specular = calculateSpecular(-direction, input.normal, input.viewVector, specularColour, specularPower);
         }
     }
     
     // Combine lightning with ambient and texture
-    colour = saturate(colour + ambient);
+    colour = saturate(colour + specular + ambient);
     return saturate(colour) * textureColour;
 }
