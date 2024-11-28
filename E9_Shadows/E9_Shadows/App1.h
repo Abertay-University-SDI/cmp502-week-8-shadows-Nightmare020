@@ -31,7 +31,8 @@ private:
 	CubeMesh* cubeMesh;
 	SphereMesh* sphereMesh;
 	SphereMesh* sunlightMesh;
-	OrthoMesh* orthoMesh;
+	OrthoMesh* orthoMesh1;
+	OrthoMesh* orthoMesh2;
 
 	Light* light;
 	AModel* model;

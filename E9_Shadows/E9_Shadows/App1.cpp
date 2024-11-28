@@ -41,7 +41,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Initialize ortho meshes
-	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 3.7, screenHeight / 3.7, -screenWidth / 2.8, screenHeight / 2.8);
+	orthoMesh1 = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 3.7, screenHeight / 3.7, -screenWidth / 2.8, screenHeight / 2.8);
+	orthoMesh2 = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 3.7, screenHeight / 3.7, screenWidth / 2.8, -screenHeight / 2.8);
 
 	// Configure directional light
 	light = new Light();
@@ -89,9 +90,14 @@ App1::~App1()
 		delete model;
 	}
 
-	if (orthoMesh != nullptr)
+	if (orthoMesh1 != nullptr)
 	{
-		delete orthoMesh;
+		delete orthoMesh1;
+	}
+
+	if (orthoMesh2 != nullptr)
+	{
+		delete orthoMesh2;
 	}
 }
 
@@ -298,9 +304,13 @@ void App1::finalPass()
 	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
 	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
 
-	orthoMesh->sendData(renderer->getDeviceContext());
+	orthoMesh1->sendData(renderer->getDeviceContext());
 	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, shadowMap->getDepthMapSRV());
-	textureShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+	textureShader->render(renderer->getDeviceContext(), orthoMesh1->getIndexCount());
+
+	orthoMesh2->sendData(renderer->getDeviceContext());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, shadowMap->getDepthMapSRV());
+	textureShader->render(renderer->getDeviceContext(), orthoMesh2->getIndexCount());
 
 	renderer->setZBuffer(true);
 
