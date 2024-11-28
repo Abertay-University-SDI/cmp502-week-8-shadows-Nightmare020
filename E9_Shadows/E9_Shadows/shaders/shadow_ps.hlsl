@@ -104,6 +104,6 @@ float4 main(InputType input) : SV_TARGET
     }
     
     // Combine lightning with ambient and texture
-    colour = saturate(colour + specular + ambient);
-    return saturate(colour) * textureColour;
+    colour = saturate(colour + ambient);
+    return saturate(colour + specular) * textureColour;
 }

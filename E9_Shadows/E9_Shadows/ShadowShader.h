@@ -32,18 +32,26 @@ private:
 		XMFLOAT3 padding2;
 	};
 
+	struct CameraBufferType
+	{
+		XMFLOAT3 cameraPosition;
+		float padding;
+	};
+
 public:
 
 	ShadowShader(ID3D11Device* device, HWND hwnd);
 	~ShadowShader();
 
-	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX &lightProjection);
+	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, 
+		Camera* camera, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX &lightProjection);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);
 
 private:
 	ID3D11Buffer* matrixBuffer;
+	ID3D11Buffer* cameraBuffer;
 	ID3D11SamplerState* sampleState;
 	ID3D11SamplerState* sampleStateShadow;
 	ID3D11Buffer* lightBuffer;

@@ -30,6 +30,11 @@ ShadowShader::~ShadowShader()
 		lightBuffer->Release();
 		lightBuffer = 0;
 	}
+	if (cameraBuffer)
+	{
+		cameraBuffer->Release();
+		cameraBuffer = 0;
+	}
 
 	//Release base shader components
 	BaseShader::~BaseShader();
@@ -39,6 +44,7 @@ ShadowShader::~ShadowShader()
 void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilename)
 {
 	D3D11_BUFFER_DESC matrixBufferDesc;
+	D3D11_BUFFER_DESC cameraBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 	D3D11_BUFFER_DESC lightBufferDesc;
 
@@ -54,6 +60,15 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
+
+	// Setup the description of the dynamic camera constant buffer that is in the vertex shader.
+	cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
+	cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cameraBufferDesc.MiscFlags = 0;
+	cameraBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&cameraBufferDesc, NULL, &cameraBuffer);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -94,7 +109,8 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX& lightProjection)
+void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, 
+	Camera* camera, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX& lightProjection)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -117,6 +133,15 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	dataPtr->lightProjection = tLightProjectionMatrix;
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
+
+	// Send camera data to vertex shader
+	CameraBufferType* cameraPtr;
+	deviceContext->Map(cameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	cameraPtr = (CameraBufferType*)mappedResource.pData;
+	cameraPtr->cameraPosition = camera->getPosition();
+	cameraPtr->padding = 0.f;
+	deviceContext->Unmap(cameraBuffer, 0);
+	deviceContext->VSSetConstantBuffers(1, 1, &cameraBuffer);
 
 	//Additional
 	// Send light data to pixel shader
