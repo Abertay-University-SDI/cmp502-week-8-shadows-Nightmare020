@@ -26,7 +26,7 @@ ShadowShader::~ShadowShader()
 		layout = 0;
 	}
 	if (lightBuffer)
-	{	
+	{
 		lightBuffer->Release();
 		lightBuffer = 0;
 	}
@@ -94,19 +94,20 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX& lightProjection)
+void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX& worldMatrix, const XMMATRIX& viewMatrix, const XMMATRIX& projectionMatrix, ID3D11ShaderResourceView* texture,
+	ID3D11ShaderResourceView* depthMap, Light* lights[], const XMMATRIX& lightProjection)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
 	LightBufferType* lightPtr;
-	
+
 	// Transpose the matrices to prepare them for the shader.
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
-	XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
+	XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[0]->getViewMatrix());
 	XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lightProjection);
-	
+
 	// Lock the constant buffer so it can be written to.
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
@@ -122,13 +123,16 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	// Send light data to pixel shader
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->direction = light->getDirection();
-	lightPtr->padding1 = 0.0f;
-	lightPtr->specularColour = light->getSpecularColour();
-	lightPtr->specularPower = light->getSpecularPower();
-	lightPtr->padding2 = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	for (int i = 0; i < 2; ++i)
+	{
+		lightPtr->ambient[i] = lights[i]->getAmbientColour();
+		lightPtr->diffuse[i] = lights[i]->getDiffuseColour();
+		lightPtr->direction[i] = XMFLOAT4(lights[i]->getDirection().x, lights[i]->getDirection().y, lights[i]->getDirection().z, 0.0f);
+		lightPtr->specularColour[i] = lights[i]->getSpecularColour();
+		lightPtr->specularPower[i] = XMFLOAT4(lights[i]->getSpecularPower(), 0.0f, 0.0f, 0.0f);
+	}
+
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 

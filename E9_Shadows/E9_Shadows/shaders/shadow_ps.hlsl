@@ -7,13 +7,11 @@ SamplerState shadowSampler : register(s1);
 
 cbuffer LightBuffer : register(b0)
 {
-	float4 ambient;
-	float4 diffuse;
-	float3 direction;
-    float padding1;
-    float4 specularColour;
-    float specularPower;
-    float3 padding2;
+	float4 ambient[2];
+    float4 diffuse[2];
+    float4 direction[2];
+    float4 specularColour[2];
+    float4 specularPower[2];
 };
 
 struct InputType
@@ -81,7 +79,7 @@ float4 main(InputType input) : SV_TARGET
 {
     float shadowMapBias = 0.01f;
     
-    float4 colour = float4(0.f, 0.f, 0.f, 1.f);
+    float4 finalColour = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 
 	// Calculate the projected texture coordinates.
@@ -90,22 +88,30 @@ float4 main(InputType input) : SV_TARGET
     // Calculate the view vector
     float3 viewVector = normalize(-input.position.xyz);
     
-    // Shadow test. Is or isn't in shadow
-    if (hasDepthData(pTexCoord))
+    for (int i = 0; i < 2; ++i)
     {
-        // Has depth map data
-        if (!isInShadow(depthMapTexture, pTexCoord, input.lightViewPos, shadowMapBias))
+        // Lights accumulation
+        float4 lightsAccumulation = float4(0.f, 0.f, 0.f, 1.f);
+        
+        // Shadow test. Is or isn't in shadow
+        if (hasDepthData(pTexCoord))
         {
-            // is NOT in shadow, therefore light
-            colour = calculateLighting(-direction, normal, diffuse);
+            // Has depth map data
+            if (!isInShadow(depthMapTexture, pTexCoord, input.lightViewPos, shadowMapBias))
+            {
+                
+                // is NOT in shadow, therefore light
+                lightsAccumulation = calculateLighting(-direction[i].xyz, input.normal, diffuse[i]);
             
-            // Add specular colour
-            colour += calculateSpecular(direction, normal, viewVector, specularColour, specularPower);
+                // Add specular colour
+                lightsAccumulation += calculateSpecular(direction[i].xyz, input.normal, viewVector, specularColour[i], specularPower[i].x);
 
+            }
         }
+       
+        // Combine lightning with ambient and texture
+        finalColour += saturate(lightsAccumulation + ambient[i]);  
     }
     
-    // Combine lightning with ambient and texture
-    colour = saturate(colour + ambient);
-    return saturate(colour) * textureColour;
+    return saturate(finalColour) * textureColour;
 }
