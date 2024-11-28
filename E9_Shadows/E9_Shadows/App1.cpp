@@ -15,14 +15,14 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Create Mesh object and shader object
 	planeMesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
-	/*cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
+	cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	sphereMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
-	sunlightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());*/
+	sunlightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	textureMgr->loadTexture(L"ceramic", L"res/ceramic.png");
-	/*textureMgr->loadTexture(L"wood", L"res/wood.png");
+	textureMgr->loadTexture(L"wood", L"res/wood.png");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 	textureMgr->loadTexture(L"glass", L"res/glass.png");
-	textureMgr->loadTexture(L"sun", L"res/sun.png");*/
+	textureMgr->loadTexture(L"sun", L"res/sun.png");
 
 	// initial shaders
 	teapotTextureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -41,7 +41,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
 
 	// Initialize ortho meshes
-	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 2, screenHeight / 2, -screenWidth / 1.4, screenHeight / 1.5);
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth / 3.7, screenHeight / 3.7, -screenWidth / 2.8, screenHeight / 2.8);
 
 	// Configure directional light
 	light = new Light();
@@ -107,32 +107,32 @@ bool App1::frame()
 	}
 	
 	// Get the time elapsed since last frame
-	//float deltaTime = timer->getTime();
+	float deltaTime = timer->getTime();
 
-	//// Rotate teapot at any degrees (gui) per second
-	//teapotRotation += teapotRotationSpeed * deltaTime;
-	//if (teapotRotation >= 360.0f)
-	//{
-	//	// Wrap around if we reached 360�
-	//	teapotRotation -= 360.0f;
-	//}
+	// Rotate teapot at any degrees (gui) per second
+	teapotRotation += teapotRotationSpeed * deltaTime;
+	if (teapotRotation >= 360.0f)
+	{
+		// Wrap around if we reached 360º
+		teapotRotation -= 360.0f;
+	}
 
-	//// Move cube forward at 2 units per second
-	//cubePosition += cubeTranslationSpeed * deltaTime;
-	//if (cubePosition > 9.0f) 
-	//{
-	//	// Reset position after moving forward 10 units
-	//	cubePosition = -4.0f;
-	//}
+	// Move cube forward at 2 units per second
+	cubePosition += cubeTranslationSpeed * deltaTime;
+	if (cubePosition > 9.0f) 
+	{
+		// Reset position after moving forward 10 units
+		cubePosition = -4.0f;
+	}
 
-	//// Move and rotate sphere at 3 units per second, and at 360 degrees per second
-	//spherePosition += sphereTranslationSpeed * deltaTime;
-	//sphereRotation += sphereRotationSpeed * deltaTime;
-	//if (spherePosition > 50.0f)
-	//{
-	//	// Reset position after moving forward 10 units
-	//	spherePosition = -10.0f;
-	//}
+	// Move and rotate sphere at 3 units per second, and at 360 degrees per second
+	spherePosition += sphereTranslationSpeed * deltaTime;
+	sphereRotation += sphereRotationSpeed * deltaTime;
+	if (spherePosition > 50.0f)
+	{
+		// Reset position after moving forward 10 units
+		spherePosition = -10.0f;
+	}
 
 	// Render the graphics.
 	result = render();
@@ -192,31 +192,31 @@ void App1::depthPass()
 	depthShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube and sphere
-	//worldMatrix = renderer->getWorldMatrix();
-	//translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
-	//scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
-	//worldMatrix = translationMatrix * scaleMatrix;
-	//cubeMesh->sendData(renderer->getDeviceContext());
-	//depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	//depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
+	scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
+	worldMatrix = translationMatrix * scaleMatrix;
+	cubeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
-	//worldMatrix = renderer->getWorldMatrix();
-	//translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
-	//scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
-	//rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
-	//worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-	//sphereMesh->sendData(renderer->getDeviceContext());
-	//depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	//depthShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
+	scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
+	rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
+	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+	sphereMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
-	//// Render sun light sphere
-	//worldMatrix = renderer->getWorldMatrix();
-	//translationMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
-	//scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
-	//worldMatrix = scaleMatrix * translationMatrix;
-	//sunlightMesh->sendData(renderer->getDeviceContext());
-	//depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	//depthShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+	// Render sun light sphere
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
+	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	worldMatrix = scaleMatrix * translationMatrix;
+	sunlightMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -261,39 +261,40 @@ void App1::finalPass()
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube and sphere
-	//worldMatrix = renderer->getWorldMatrix();
-	//translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
-	//scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
-	//worldMatrix =  translationMatrix * scaleMatrix;
-	//cubeMesh->sendData(renderer->getDeviceContext());
-	//shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"), 
-	//	camera, shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
-	//shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
+	scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
+	worldMatrix =  translationMatrix * scaleMatrix;
+	cubeMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"), 
+		camera, shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
-	//worldMatrix = renderer->getWorldMatrix();
-	//translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
-	//scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
-	//rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
-	//worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-	//sphereMesh->sendData(renderer->getDeviceContext());
-	//shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"), 
-	//	camera, shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
-	//shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
+	scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
+	rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
+	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+	sphereMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"), 
+		camera, shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
-	//// Render sun light sphere
-	//worldMatrix = renderer->getWorldMatrix();
-	//translationMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
-	//scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
-	//worldMatrix = scaleMatrix * translationMatrix;
-	//sunlightMesh->sendData(renderer->getDeviceContext());
-	//shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"), 
-	//	camera, shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
-	//shadowShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+	// Render sun light sphere
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
+	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	worldMatrix = scaleMatrix * translationMatrix;
+	sunlightMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"), 
+		camera, shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
 
 	// Render the shadow map ortho mesh
 	renderer->setZBuffer(false);
 
 	// Get ortho matrices
+	worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();
 	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();
 
