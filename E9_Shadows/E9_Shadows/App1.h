@@ -21,7 +21,6 @@ public:
 protected:
 	bool render();
 	void depthPass();
-	void shadowMapDebugger();
 	void finalPass();
 	void gui();
 
@@ -33,11 +32,6 @@ private:
 	SphereMesh* sphereMesh;
 	SphereMesh* sunlightMesh;
 	OrthoMesh* orthoMesh;
-	OrthoMesh* shadowMapDebugOrthoMesh;
-	RenderTexture* shadowMapDebugTexture;
-
-	// Add a new camera for the shadow map debug
-	Camera* rtTDebugCamera;
 
 	Light* light;
 	AModel* model;
