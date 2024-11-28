@@ -52,28 +52,17 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 		shadowMapDebugTexture->getTextureWidth() / 2, shadowMapDebugTexture->getTextureHeight() / 2,
 		-shadowmapWidth/ 2.5, shadowmapHeight / 4.9);
 
-	lights[0] = new Light();
-	lights[1] = new Light();
+	// Configure directional light
+	light = new Light();
+	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
+	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
+	light->setDirection(0.0f, -0.7f, 0.7f);
+	light->setPosition(0.f, 0.f, -10.f);
+	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 
-	lights[0]->setPosition(0.f, 50.f, -10.f);
-	lights[1]->setPosition(0.f, 50.f, 120.f);
-
-	// Configure directional lights
-	for (int i = 0; i < 2; ++i)
-	{
-		lights[i]->setDirection(0.0f, -0.7f, 0.7f);
-		lights[i]->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
-		lights[i]->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-		lights[i]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
-
-		// Configure sphere light for debug
-		lightDirections[i] = lights[i]->getDirection();
-		lightPositions[i] = lights[i]->getPosition();
-		lightAmbientIntensities[i] = 0.3f;
-		lightDiffuseIntensities[i] = 1.0f;
-		lightSpecularColours[i] = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		lightSpecularPowers[i] = 0.0f;
-	}
+	// Configure sphere light for debug
+	lightDirection = light->getDirection();
+	lightPosition = light->getPosition();
 }
 
 App1::~App1()
@@ -187,69 +176,66 @@ bool App1::render()
 
 void App1::depthPass()
 {
-	for (int i = 0; i < 2; ++i)
+	// Set the render target to be the render to texture.
+	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
+
+	// get the world, view, and projection matrices from the camera and d3d objects.
+	light->generateViewMatrix();
+	XMMATRIX lightViewMatrix = light->getViewMatrix();
+	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
+
+	if (usePerspectiveProjection)
 	{
-		// Set the render target to be the render to texture.
-		shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
-
-		// Get the world, view, and projection matrices from the camera and d3d objects.
-		lights[i]->generateViewMatrix();
-		XMMATRIX lightViewMatrix = lights[i]->getViewMatrix();
-		XMMATRIX lightProjectionMatrix = lights[i]->getOrthoMatrix();
-
-		if (usePerspectiveProjection)
-		{
-			lights[i]->generateProjectionMatrix(0.1f, 100.f);
-			lightProjectionMatrix = lights[i]->getProjectionMatrix();
-		}
-
-		XMMATRIX worldMatrix = renderer->getWorldMatrix();
-
-		worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
-
-		// Render floor
-		planeMesh->sendData(renderer->getDeviceContext());
-		depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-		depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
-
-		worldMatrix = renderer->getWorldMatrix();
-		XMMATRIX translationMatrix = XMMatrixTranslation(0.f, 4.f, 20.f);
-		XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-		XMMATRIX rotationMatrix = XMMatrixRotationY(XMConvertToRadians(teapotRotation));
-		worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-
-		// Render model
-		model->sendData(renderer->getDeviceContext());
-		depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-		depthShader->render(renderer->getDeviceContext(), model->getIndexCount());
-
-		// Render cube and sphere
-		worldMatrix = renderer->getWorldMatrix();
-		translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
-		scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
-		worldMatrix = translationMatrix * scaleMatrix;
-		cubeMesh->sendData(renderer->getDeviceContext());
-		depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-		depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
-
-		worldMatrix = renderer->getWorldMatrix();
-		translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
-		scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
-		rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
-		worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-		sphereMesh->sendData(renderer->getDeviceContext());
-		depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-		depthShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
-
-		// Render sun light sphere
-		worldMatrix = renderer->getWorldMatrix();
-		translationMatrix = XMMatrixTranslation(lightPositions[i].x, lightPositions[i].y, lightPositions[i].z);
-		scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
-		worldMatrix = scaleMatrix * translationMatrix;
-		sunlightMesh->sendData(renderer->getDeviceContext());
-		depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-		depthShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+		light->generateProjectionMatrix(0.1f, 100.f);
+		lightProjectionMatrix = light->getProjectionMatrix();
 	}
+
+	XMMATRIX worldMatrix = renderer->getWorldMatrix();
+
+	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
+
+	// Render floor
+	planeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
+	XMMATRIX translationMatrix = XMMatrixTranslation(0.f, 4.f, 20.f);
+	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	XMMATRIX rotationMatrix = XMMatrixRotationY(XMConvertToRadians(teapotRotation));
+	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+
+	// Render model
+	model->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), model->getIndexCount());
+
+	// Render cube and sphere
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
+	scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
+	worldMatrix = translationMatrix * scaleMatrix;
+	cubeMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
+	scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
+	rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
+	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+	sphereMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+
+	// Render sun light sphere
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
+	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	worldMatrix = scaleMatrix * translationMatrix;
+	sunlightMesh->sendData(renderer->getDeviceContext());
+	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
+	depthShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -292,70 +278,62 @@ void App1::finalPass()
 	renderer->beginScene(0.39f, 0.58f, 0.92f, 1.0f);
 	camera->update();
 
-	// Get the world, view, projection, and ortho matrices from the camera and Direct3D objects.
+	// get the world, view, projection, and ortho matrices from the camera and Direct3D objects.
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
+	XMMATRIX lightProjectionMatrix = light->getOrthoMatrix();
 
-	for (int i = 0; i < 2; ++i)
+	if (usePerspectiveProjection)
 	{
-		XMMATRIX lightProjectionMatrix = lights[i]->getOrthoMatrix();
-
-		if (usePerspectiveProjection)
-		{
-			lights[i]->generateProjectionMatrix(0.1f, 100.f);
-			lightProjectionMatrix = lights[i]->getProjectionMatrix();
-		}
-
-		worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
-
-		// Render floor
-		planeMesh->sendData(renderer->getDeviceContext());
-		shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-			textureMgr->getTexture(L"wood"), shadowMap->getDepthMapSRV(), lights, lightProjectionMatrix);
-		shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
-
-		// Render model
-		worldMatrix = renderer->getWorldMatrix();
-		XMMATRIX translationMatrix = XMMatrixTranslation(0.f, 4.f, 20.f);
-		XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-		XMMATRIX rotationMatrix = XMMatrixRotationY(XMConvertToRadians(teapotRotation));
-		worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-		model->sendData(renderer->getDeviceContext());
-		shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-			textureMgr->getTexture(L"ceramic"), shadowMap->getDepthMapSRV(), lights, lightProjectionMatrix);
-		shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
-
-		// Render cube and sphere
-		worldMatrix = renderer->getWorldMatrix();
-		translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
-		scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
-		worldMatrix = translationMatrix * scaleMatrix;
-		cubeMesh->sendData(renderer->getDeviceContext());
-		shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-			textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), lights, lightProjectionMatrix);
-		shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
-
-		worldMatrix = renderer->getWorldMatrix();
-		translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
-		scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
-		rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
-		worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-		sphereMesh->sendData(renderer->getDeviceContext());
-		shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-			textureMgr->getTexture(L"glass"), shadowMap->getDepthMapSRV(), lights, lightProjectionMatrix);
-		shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
-
-		// Render sun light sphere
-		worldMatrix = renderer->getWorldMatrix();
-		translationMatrix = XMMatrixTranslation(lightPositions[i].x, lightPositions[i].y, lightPositions[i].z);
-		scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
-		worldMatrix = scaleMatrix * translationMatrix;
-		sunlightMesh->sendData(renderer->getDeviceContext());
-		shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-			textureMgr->getTexture(L"sun"), shadowMap->getDepthMapSRV(), lights, lightProjectionMatrix);
-		shadowShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+		light->generateProjectionMatrix(0.1f, 100.f);
+		lightProjectionMatrix = light->getProjectionMatrix();
 	}
+
+	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
+
+	// Render floor
+	planeMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
+		textureMgr->getTexture(L"wood"), shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
+
+	// Render model
+	worldMatrix = renderer->getWorldMatrix();
+	XMMATRIX translationMatrix = XMMatrixTranslation(0.f, 4.f, 20.f);
+	XMMATRIX scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	XMMATRIX rotationMatrix = XMMatrixRotationY(XMConvertToRadians(teapotRotation));
+	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+	model->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"ceramic"), shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
+
+	// Render cube and sphere
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
+	scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
+	worldMatrix =  translationMatrix * scaleMatrix;
+	cubeMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
+	scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
+	rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
+	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+	sphereMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"), shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
+
+	// Render sun light sphere
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(lightPosition.x, lightPosition.y, lightPosition.z);
+	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	worldMatrix = scaleMatrix * translationMatrix;
+	sunlightMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"), shadowMap->getDepthMapSRV(), light, lightProjectionMatrix);
+	shadowShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
 
 	// Render the shadow map ortho mesh
 	renderer->setZBuffer(false);
@@ -403,41 +381,23 @@ void App1::gui()
 
 	ImGui::Checkbox("Use Perspective Projection", &usePerspectiveProjection);
 
-	ImGui::SliderFloat3("Position Light 1", (float*)&lightPositions[0], -100.0f, 200.0f);
-	lights[0]->setPosition(lightPositions[0].x, lightPositions[0].y, lightPositions[0].z);
+	ImGui::SliderFloat3("Position", (float*)&lightPosition, -50.0f, 50.0f);
+	light->setPosition(lightPosition.x, lightPosition.y, lightPosition.z);
 
-	ImGui::SliderFloat3("Position Light 2", (float*)&lightPositions[1], -100.0f, 200.0f);
-	lights[1]->setPosition(lightPositions[1].x, lightPositions[1].y, lightPositions[1].z);
+	ImGui::SliderFloat3("Direction", (float*)&lightDirection, -1.0f, 1.0f);
+	light->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
 
-	ImGui::SliderFloat3("Direction Light 1", (float*)&lightDirections[0], -1.0f, 1.0f);
-	lights[0]->setDirection(lightDirections[0].x, lightDirections[0].y, lightDirections[0].z);
-	
-	ImGui::SliderFloat3("Direction Light 2", (float*)&lightDirections[1], -1.0f, 1.0f);
-	lights[1]->setDirection(lightDirections[1].x, lightDirections[1].y, lightDirections[1].z);
+	ImGui::SliderFloat("Ambient Intensity", &lightAmbientIntensity, 0.0f, 1.0f);
+	light->setAmbientColour(lightAmbientIntensity, lightAmbientIntensity, lightAmbientIntensity, 1.0f);
 
-	ImGui::SliderFloat("Ambient Intensity Light 1", &lightAmbientIntensities[0], 0.0f, 1.0f);
-	lights[0]->setAmbientColour(lightAmbientIntensities[0], lightAmbientIntensities[0], lightAmbientIntensities[0], 1.0f);
-	
-	ImGui::SliderFloat("Ambient Intensity Light 2", &lightAmbientIntensities[1], 0.0f, 1.0f);
-	lights[1]->setAmbientColour(lightAmbientIntensities[1], lightAmbientIntensities[1], lightAmbientIntensities[1], 1.0f);
+	ImGui::SliderFloat("Diffuse Intensity", &lightDiffuseIntensity, 0.0f, 1.0f);
+	light->setDiffuseColour(lightDiffuseIntensity, lightDiffuseIntensity, lightDiffuseIntensity, 1.0f);
 
-	ImGui::SliderFloat("Diffuse Intensity Light 1", &lightDiffuseIntensities[0], 0.0f, 1.0f);
-	lights[0]->setDiffuseColour(lightDiffuseIntensities[0], lightDiffuseIntensities[0], lightDiffuseIntensities[0], 1.0f);
-	
-	ImGui::SliderFloat("Diffuse Intensity Light 2", &lightDiffuseIntensities[1], 0.0f, 1.0f);
-	lights[1]->setDiffuseColour(lightDiffuseIntensities[1], lightDiffuseIntensities[1], lightDiffuseIntensities[1], 1.0f);
+	ImGui::SliderFloat4("Specular Colour", (float*) & lightSpecularColour, 0.0f, 1.0f);
+	light->setSpecularColour(lightSpecularColour.x, lightSpecularColour.y, lightSpecularColour.z, 1.0f);
 
-	ImGui::SliderFloat4("Specular Colour Light 1", (float*) & lightSpecularColours[0], 0.0f, 1.0f);
-	lights[0]->setSpecularColour(lightSpecularColours[0].x, lightSpecularColours[0].y, lightSpecularColours[0].z, 1.0f);
-	
-	ImGui::SliderFloat4("Specular Colour Light 2", (float*) & lightSpecularColours[1], 0.0f, 1.0f);
-	lights[1]->setSpecularColour(lightSpecularColours[1].x, lightSpecularColours[1].y, lightSpecularColours[1].z, 1.0f);
-
-	ImGui::SliderFloat("Specular Power Light 1", &lightSpecularPowers[0], 0.0f, 1.0f);
-	lights[0]->setSpecularPower(lightSpecularPowers[0]);
-	
-	ImGui::SliderFloat("Specular Power Light 2", &lightSpecularPowers[1], 0.0f, 1.0f);
-	lights[1]->setSpecularPower(lightSpecularPowers[1]);
+	ImGui::SliderFloat("Specular Power", &lightSpecularPower, 0.0f, 1.0f);
+	light->setSpecularPower(lightSpecularPower);
 
 	// End ImGui
 	ImGui::End();

@@ -39,7 +39,7 @@ private:
 	// Add a new camera for the shadow map debug
 	Camera* rtTDebugCamera;
 
-	Light* lights[2];
+	Light* light;
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
@@ -59,12 +59,12 @@ private:
 
 	// Light manipulation variables
 	bool usePerspectiveProjection = false; // Default to orthographic
-	XMFLOAT3 lightDirections[2];
-	XMFLOAT3 lightPositions[2];
-	float lightAmbientIntensities[2];
-	float lightDiffuseIntensities[2];
-	XMFLOAT4 lightSpecularColours[2];
-	float lightSpecularPowers[2];
+	XMFLOAT3 lightDirection;
+	XMFLOAT3 lightPosition;
+	float lightAmbientIntensity = 0.3;
+	float lightDiffuseIntensity = 1.0f;
+	XMFLOAT4 lightSpecularColour = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	float lightSpecularPower = 0.0f;
 };
 
 #endif
