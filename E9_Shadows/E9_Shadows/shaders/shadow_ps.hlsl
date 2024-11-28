@@ -10,10 +10,6 @@ cbuffer LightBuffer : register(b0)
 	float4 ambient;
 	float4 diffuse;
 	float3 direction;
-    float padding1;
-    float4 specularColour;
-    float specularPower;
-    float3 padding2;
 };
 
 struct InputType
@@ -30,14 +26,6 @@ float4 calculateLighting(float3 lightDirection, float3 normal, float4 diffuse)
     float intensity = saturate(dot(normal, lightDirection));
     float4 colour = saturate(diffuse * intensity);
     return colour;
-}
-
-float4 calculateSpecular(float3 lightDirection, float3 normal, float3 viewVector, float4 specularColour, float specularPower)
-{
-	// Blinn-phong specular calculation
-    float3 halfway = normalize(lightDirection + viewVector);
-    float specularIntensity = pow(max(dot(normal, halfway), 0.f), specularPower);
-    return saturate(specularColour * specularIntensity);
 }
 
 // Is the gemoetry in our shadow map
@@ -79,17 +67,13 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float shadowMapBias = 0.01f;
-    
+    float shadowMapBias = 0.005f;
     float4 colour = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 
 	// Calculate the projected texture coordinates.
     float2 pTexCoord = getProjectiveCoords(input.lightViewPos);
-    
-    // Calculate the view vector
-    float3 viewVector = normalize(-input.position.xyz);
-    
+	
     // Shadow test. Is or isn't in shadow
     if (hasDepthData(pTexCoord))
     {
@@ -97,11 +81,7 @@ float4 main(InputType input) : SV_TARGET
         if (!isInShadow(depthMapTexture, pTexCoord, input.lightViewPos, shadowMapBias))
         {
             // is NOT in shadow, therefore light
-            colour = calculateLighting(-direction, normal, diffuse);
-            
-            // Add specular colour
-            colour += calculateSpecular(direction, normal, viewVector, specularColour, specularPower);
-
+            colour = calculateLighting(-direction, input.normal, diffuse);
         }
     }
     

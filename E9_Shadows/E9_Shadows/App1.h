@@ -58,13 +58,11 @@ private:
 	float sphereRotationSpeed = 360.0f; // Adjust the speed at which the sphere rotates
 
 	// Light manipulation variables
-	bool usePerspectiveProjection = false; // Default to orthographic
 	XMFLOAT3 lightDirection;
 	XMFLOAT3 lightPosition;
 	float lightAmbientIntensity = 0.3;
 	float lightDiffuseIntensity = 1.0f;
-	XMFLOAT4 lightSpecularColour = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	float lightSpecularPower = 0.0f;
+	bool usePerspectiveProjection = false; // Default to orthographic
 };
 
 #endif

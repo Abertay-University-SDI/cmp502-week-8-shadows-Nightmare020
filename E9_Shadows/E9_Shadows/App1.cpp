@@ -393,12 +393,6 @@ void App1::gui()
 	ImGui::SliderFloat("Diffuse Intensity", &lightDiffuseIntensity, 0.0f, 1.0f);
 	light->setDiffuseColour(lightDiffuseIntensity, lightDiffuseIntensity, lightDiffuseIntensity, 1.0f);
 
-	ImGui::SliderFloat4("Specular Colour", (float*) & lightSpecularColour, 0.0f, 1.0f);
-	light->setSpecularColour(lightSpecularColour.x, lightSpecularColour.y, lightSpecularColour.z, 1.0f);
-
-	ImGui::SliderFloat("Specular Power", &lightSpecularPower, 0.0f, 1.0f);
-	light->setSpecularPower(lightSpecularPower);
-
 	// End ImGui
 	ImGui::End();
 
