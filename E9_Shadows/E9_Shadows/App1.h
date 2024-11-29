@@ -34,13 +34,13 @@ private:
 	OrthoMesh* orthoMesh1;
 	OrthoMesh* orthoMesh2;
 
-	Light* light;
+	Light* light[2];
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 	TextureShader* textureShader;
 
-	ShadowMap* shadowMap;
+	ShadowMap* shadowMap[2];
 
 	// Variables for the purpose of tracking the meshes animations
 	float teapotRotation = 0.0f; // Tracks the teapot's rotation
@@ -53,13 +53,13 @@ private:
 	float sphereRotationSpeed = 360.0f; // Adjust the speed at which the sphere rotates
 
 	// Light manipulation variables
-	XMFLOAT3 lightDirection;
-	XMFLOAT3 lightPosition;
-	float lightAmbientIntensity = 0.3;
-	float lightDiffuseIntensity = 1.0f;
-	XMFLOAT4 lightSpecularColour = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	float lightSpecularPower = 0.0f;
 	bool usePerspectiveProjection = false; // Default to orthographic
+	XMFLOAT3 lightDirection[2];
+	XMFLOAT3 lightPosition[2];
+	float lightAmbientIntensity[2];
+	float lightDiffuseIntensity[2];
+	XMFLOAT4 lightSpecularColour[2];
+	float lightSpecularPower[2];
 };
 
 #endif

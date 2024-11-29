@@ -17,19 +17,17 @@ private:
 		XMMATRIX world;
 		XMMATRIX view;
 		XMMATRIX projection;
-		XMMATRIX lightView;
-		XMMATRIX lightProjection;
+		XMMATRIX lightView[2];
+		XMMATRIX lightProjection[2];
 	};
 
 	struct LightBufferType
 	{
-		XMFLOAT4 ambient;
-		XMFLOAT4 diffuse;
-		XMFLOAT3 direction;
-		float padding1;
-		XMFLOAT4 specularColour;
-		float specularPower;
-		XMFLOAT3 padding2;
+		XMFLOAT4 ambient[2];
+		XMFLOAT4 diffuse[2];
+		XMFLOAT4 direction[2];
+		XMFLOAT4 specularColour[2];
+		XMFLOAT4 specularPower[2];
 	};
 
 	struct CameraBufferType
@@ -44,7 +42,7 @@ public:
 	~ShadowShader();
 
 	void setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &world, const XMMATRIX &view, const XMMATRIX &projection, ID3D11ShaderResourceView* texture, 
-		Camera* camera, ID3D11ShaderResourceView*depthMap, Light* light, const XMMATRIX &lightProjection);
+		Camera* camera, ID3D11ShaderResourceView* depthMap[], Light* light[], const XMMATRIX lightProjection[]);
 
 private:
 	void initShader(const wchar_t* vs, const wchar_t* ps);

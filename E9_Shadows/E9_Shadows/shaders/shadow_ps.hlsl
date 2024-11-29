@@ -1,19 +1,17 @@
 
 Texture2D shaderTexture : register(t0);
-Texture2D depthMapTexture : register(t1);
+Texture2D depthMapTexture[2] : register(t1);
 
 SamplerState diffuseSampler  : register(s0);
 SamplerState shadowSampler : register(s1);
 
 cbuffer LightBuffer : register(b0)
 {
-	float4 ambient;
-	float4 diffuse;
-	float3 direction;
-    float padding1;
-    float4 specularColour;
-    float specularPower;
-    float3 padding2;
+	float4 ambient[2];
+	float4 diffuse[2];
+	float4 direction[2];
+    float4 specularColour[2];
+    float4 specularPower[2];
 };
 
 struct InputType
@@ -21,8 +19,8 @@ struct InputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
 	float3 normal : NORMAL;
-    float4 lightViewPos : TEXCOORD1;
-    float3 viewVector : TEXCOORD2;
+    float4 lightViewPos[2] : TEXCOORD1;
+    float3 viewVector : TEXCOORD3;
 };
 
 // Calculate lighting intensity based on direction and normal. Combine with light colour.
@@ -80,30 +78,33 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float cosTheta = abs(dot(input.normal, -direction));
-    float shadowMapBias = 0.005 / max(cosTheta, 0.1f);
+    float shadowMapBias = 0.01;
     float4 colour = float4(0.f, 0.f, 0.f, 1.f);
     float4 specular = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
 
-	// Calculate the projected texture coordinates.
-    float2 pTexCoord = getProjectiveCoords(input.lightViewPos);
+    for (int i = 0; i < 2; ++i)
+    {        
+        // Calculate the projected texture coordinates.
+        float2 pTexCoord = getProjectiveCoords(input.lightViewPos[i]);
 	
-    // Shadow test. Is or isn't in shadow
-    if (hasDepthData(pTexCoord))
-    {
-        // Has depth map data
-        if (!isInShadow(depthMapTexture, pTexCoord, input.lightViewPos, shadowMapBias))
+        // Shadow test. Is or isn't in shadow
+        if (hasDepthData(pTexCoord))
         {
-            // is NOT in shadow, therefore light
-            colour = calculateLighting(-direction, input.normal, diffuse);
+            // Has depth map data
+            if (!isInShadow(depthMapTexture[i], pTexCoord, input.lightViewPos[i], shadowMapBias))
+            {
+                // is NOT in shadow, therefore light
+                colour += calculateLighting(-direction[i], input.normal, diffuse[i]);
             
-            // Add specular colour
-            specular = calculateSpecular(-direction, input.normal, input.viewVector, specularColour, specularPower);
+                // Add specular colour
+                specular += calculateSpecular(-direction[i], input.normal, input.viewVector, specularColour[i], specularPower[i]);
+            }
         }
+        
+        // Combine lightning with ambient and texture
+        colour += ambient[i];
     }
     
-    // Combine lightning with ambient and texture
-    colour = saturate(colour + ambient);
     return saturate(colour + specular) * textureColour;
 }
