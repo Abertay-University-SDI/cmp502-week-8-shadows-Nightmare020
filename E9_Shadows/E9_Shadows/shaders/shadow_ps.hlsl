@@ -88,6 +88,8 @@ float4 main(InputType input) : SV_TARGET
         // Calculate the projected texture coordinates.
         float2 pTexCoord = getProjectiveCoords(input.lightViewPos[i]);
 	
+        float3 normalizedDir = normalize(-direction[i].xyz);
+        
         // Shadow test. Is or isn't in shadow
         if (hasDepthData(pTexCoord))
         {
@@ -95,16 +97,19 @@ float4 main(InputType input) : SV_TARGET
             if (!isInShadow(depthMapTexture[i], pTexCoord, input.lightViewPos[i], shadowMapBias))
             {
                 // is NOT in shadow, therefore light
-                colour += calculateLighting(-direction[i], input.normal, diffuse[i]);
+                float4 directionalLightColour = ambient[i] + calculateLighting(normalizedDir, input.normal, diffuse[i]);
             
+                // Calculate specular colour
+                specular = calculateSpecular(normalizedDir, input.normal, input.viewVector, specularColour[i], specularPower[i].x);
+                
                 // Add specular colour
-                specular += calculateSpecular(-direction[i], input.normal, input.viewVector, specularColour[i], specularPower[i]);
+                directionalLightColour += specular;
+                
+                // Accumulate the light colour from this directional light
+                colour += directionalLightColour;
             }
         }
-        
-        // Combine lightning with ambient and texture
-        colour += ambient[i];
     }
     
-    return saturate(colour + specular) * textureColour;
+    return saturate(colour) * textureColour;
 }
