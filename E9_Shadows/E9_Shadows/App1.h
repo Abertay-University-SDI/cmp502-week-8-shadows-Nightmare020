@@ -34,13 +34,14 @@ private:
 	OrthoMesh* orthoMesh1;
 	OrthoMesh* orthoMesh2;
 
-	Light* light[2];
+	Light* lights[2];
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 	TextureShader* textureShader;
 
-	ShadowMap* shadowMap[2];
+	ShadowMap* shadowMap1;
+	ShadowMap* shadowMap2;
 
 	// Variables for the purpose of tracking the meshes animations
 	float teapotRotation = 0.0f; // Tracks the teapot's rotation
