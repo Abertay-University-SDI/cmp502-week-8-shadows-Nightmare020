@@ -17,7 +17,8 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
 	cubeMesh = new CubeMesh(renderer->getDevice(), renderer->getDeviceContext());
 	sphereMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
-	sunlightMesh = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	sunlightMesh1 = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
+	sunlightMesh2 = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	textureMgr->loadTexture(L"ceramic", L"res/ceramic.png");
 	textureMgr->loadTexture(L"wood", L"res/wood.png");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
@@ -47,28 +48,20 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	// Configure directional lights
 	lights[0] = new Light();
-	lights[0]->setPosition(36.f, 15.f, -10.f);
-	lights[0]->setDirection(-0.7f, -0.7f, 0.7f);
+	lightPosition[0] = XMFLOAT3(36.f, 15.f, -10.f);
+	lightDirection[0] = XMFLOAT3(-0.7f, -0.7f, 0.7f);
 
 	lights[1] = new Light();
-	lights[1]->setPosition(-35.f, 15.f, 100.f);
-	lights[1]->setDirection(0.7f, -0.7f, -0.7f);
+	lightPosition[1] = XMFLOAT3(-35.f, 15.f, 100.f);
+	lightDirection[1] = XMFLOAT3(0.7f, -0.7f, -0.7f);
 
 	for (int i = 0; i < 2; ++i)
 	{
-		lights[i]->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
-		lights[i]->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
-		lights[i]->setSpecularColour(0.0f, 0.0f, 0.0f, 1.0f);
-		lights[i]->setSpecularPower(0.0f);
+		lightAmbientIntensity[i] = 0.3f;
+		lightDiffuseIntensity[i] = 1.0f;
+		lightSpecularColour[i] = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		lightSpecularPower[i] = 0.0f;
 		lights[i]->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
-
-		// Configure sphere light for debug
-		lightDirection[i] = lights[i]->getDirection();
-		lightPosition[i] = lights[i]->getPosition();
-		lightAmbientIntensity[i] = lights[i]->getAmbientColour().x;
-		lightDiffuseIntensity[i] = lights[i]->getDiffuseColour().x;
-		lightSpecularColour[i] = lights[i]->getSpecularColour();
-		lightSpecularPower[i] = lights[i]->getSpecularPower();
 	}
 }
 
@@ -93,9 +86,14 @@ App1::~App1()
 		delete sphereMesh;
 	}
 
-	if (sunlightMesh != nullptr)
+	if (sunlightMesh1 != nullptr)
 	{
-		delete sunlightMesh;
+		delete sunlightMesh1;
+	}
+	
+	if (sunlightMesh2 != nullptr)
+	{
+		delete sunlightMesh2;
 	}
 
 	if (model != nullptr)
@@ -182,6 +180,7 @@ void App1::depthPass()
 	shadowMap1->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 	// Get the world, view, and projection matrices from the camera and d3d objects.
+	lights[0]->setDirection(lightDirection[0].x, lightDirection[0].y, lightDirection[0].z);
 	lights[0]->generateViewMatrix();
 	XMMATRIX lightViewMatrix = lights[0]->getViewMatrix();
 	XMMATRIX lightProjectionMatrix = lights[0]->getOrthoMatrix();
@@ -234,9 +233,9 @@ void App1::depthPass()
 	translationMatrix = XMMatrixTranslation(lightPosition[0].x, lightPosition[0].y, lightPosition[0].z);
 	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
 	worldMatrix = scaleMatrix * translationMatrix;
-	sunlightMesh->sendData(renderer->getDeviceContext());
+	sunlightMesh1->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+	depthShader->render(renderer->getDeviceContext(), sunlightMesh1->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -248,6 +247,7 @@ void App1::depthPass()
 	shadowMap2->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 	// Get the world, view, and projection matrices from the camera and d3d objects.
+	lights[1]->setDirection(lightDirection[1].x, lightDirection[1].y, lightDirection[1].z);
 	lights[1]->generateViewMatrix();
 	lightViewMatrix = lights[1]->getViewMatrix();
 	lightProjectionMatrix = lights[1]->getOrthoMatrix();
@@ -300,9 +300,9 @@ void App1::depthPass()
 	translationMatrix = XMMatrixTranslation(lightPosition[1].x, lightPosition[1].y, lightPosition[1].z);
 	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
 	worldMatrix = scaleMatrix * translationMatrix;
-	sunlightMesh->sendData(renderer->getDeviceContext());
+	sunlightMesh2->sendData(renderer->getDeviceContext());
 	depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
-	depthShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+	depthShader->render(renderer->getDeviceContext(), sunlightMesh2->getIndexCount());
 
 	// Set back buffer as render target and reset view port.
 	renderer->setBackBufferRenderTarget();
@@ -375,10 +375,10 @@ void App1::finalPass()
 	translationMatrix = XMMatrixTranslation(lightPosition[0].x, lightPosition[0].y, lightPosition[0].z);
 	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
 	worldMatrix = scaleMatrix * translationMatrix;
-	sunlightMesh->sendData(renderer->getDeviceContext());
+	sunlightMesh1->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
 		camera, shadowMap1->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+	shadowShader->render(renderer->getDeviceContext(), sunlightMesh1->getIndexCount());
 
 	/** Handle second light **/
 
@@ -434,10 +434,10 @@ void App1::finalPass()
 	translationMatrix = XMMatrixTranslation(lightPosition[1].x, lightPosition[1].y, lightPosition[1].z);
 	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
 	worldMatrix = scaleMatrix * translationMatrix;
-	sunlightMesh->sendData(renderer->getDeviceContext());
+	sunlightMesh2->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
 		camera, shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), sunlightMesh->getIndexCount());
+	shadowShader->render(renderer->getDeviceContext(), sunlightMesh2->getIndexCount());
 
 	// Render the shadow map ortho mesh
 	renderer->setZBuffer(false);

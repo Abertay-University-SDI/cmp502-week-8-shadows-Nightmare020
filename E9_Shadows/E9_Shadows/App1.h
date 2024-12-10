@@ -30,7 +30,8 @@ private:
 	PlaneMesh* planeMesh;
 	CubeMesh* cubeMesh;
 	SphereMesh* sphereMesh;
-	SphereMesh* sunlightMesh;
+	SphereMesh* sunlightMesh1;
+	SphereMesh* sunlightMesh2;
 	OrthoMesh* orthoMesh1;
 	OrthoMesh* orthoMesh2;
 
