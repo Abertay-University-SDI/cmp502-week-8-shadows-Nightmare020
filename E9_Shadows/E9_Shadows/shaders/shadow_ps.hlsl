@@ -4,7 +4,7 @@ Texture2D depthMapTexture2 : register(t1);
 Texture2D depthMapTexture1 : register(t2);
 
 SamplerState diffuseSampler : register(s0);
-SamplerState shadowSampler : register(s1);
+SamplerState shadowSampler[2] : register(s1);
 
 cbuffer LightBuffer : register(b0)
 {
@@ -20,7 +20,8 @@ struct InputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
     float3 normal : NORMAL;
-    float4 lightViewPos[2] : TEXCOORD1;
+    float4 lightViewPos1 : TEXCOORD1;
+    float4 lightViewPos2 : TEXCOORD2;
     float3 viewVector : TEXCOORD3;
 };
 
@@ -50,10 +51,11 @@ bool hasDepthData(float2 uv)
     return true;
 }
 
-bool isInShadow(Texture2D sMap, float2 uv, float4 lightViewPosition, float bias)
+bool isInShadow(Texture2D sMap, SamplerState samplerShadow, float2 uv, float4 lightViewPosition, float bias)
 {
     // Sample the shadow map (get depth of geometry)
-    float depthValue = sMap.Sample(shadowSampler, uv).r;
+    float depthValue = sMap.Sample(samplerShadow, uv).r;
+    
 	// Calculate the depth from the light.
     float lightDepthValue = lightViewPosition.z / lightViewPosition.w;
     
@@ -84,8 +86,8 @@ float4 main(InputType input) : SV_TARGET
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
         
         // Calculate the projected texture coordinates.
-    float2 pTexCoord1 = getProjectiveCoords(input.lightViewPos[0]);
-    float2 pTexCoord2 = getProjectiveCoords(input.lightViewPos[1]);
+    float2 pTexCoord1 = getProjectiveCoords(input.lightViewPos1);
+    float2 pTexCoord2 = getProjectiveCoords(input.lightViewPos2);
 	
     float3 normalizedDir1 = normalize(-direction[0].xyz);
     float3 normalizedDir2 = normalize(-direction[1].xyz);
@@ -97,12 +99,12 @@ float4 main(InputType input) : SV_TARGET
         float finalShadow = 1.0f;
         
         // Check shadow for the first light
-        if (isInShadow(depthMapTexture1, pTexCoord1, input.lightViewPos[0], shadowMapBias))
+        if (isInShadow(depthMapTexture1, shadowSampler[0], pTexCoord1, input.lightViewPos1, shadowMapBias))
         {
             finalShadow *= 0.0f;
         }
         
-        if (isInShadow(depthMapTexture2, pTexCoord2, input.lightViewPos[1], shadowMapBias))
+        if (isInShadow(depthMapTexture2, shadowSampler[1], pTexCoord2, input.lightViewPos2, shadowMapBias))
         {
             finalShadow *= 0.0f;
         }

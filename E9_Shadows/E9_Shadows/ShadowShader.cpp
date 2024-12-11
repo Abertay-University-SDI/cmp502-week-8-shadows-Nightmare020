@@ -95,7 +95,11 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	samplerDesc.BorderColor[1] = 1.0f;
 	samplerDesc.BorderColor[2] = 1.0f;
 	samplerDesc.BorderColor[3] = 1.0f;
-	renderer->CreateSamplerState(&samplerDesc, &sampleStateShadow);
+
+	for (int i = 0; i < 2; ++i)
+	{ 
+		renderer->CreateSamplerState(&samplerDesc, &sampleStateShadow[i]);
+	}
 
 	// Setup light buffer
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -167,6 +171,6 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	deviceContext->PSSetShaderResources(1, 1, &depthMap1);
 	deviceContext->PSSetShaderResources(2, 1, &depthMap2);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
-	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
+	deviceContext->PSSetSamplers(1, 2, sampleStateShadow);
 }
 

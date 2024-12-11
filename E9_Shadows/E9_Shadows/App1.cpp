@@ -361,15 +361,22 @@ void App1::finalPass()
 		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
 	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
-	// Render sun light sphere
+	// Render sun light spheres
 	worldMatrix = renderer->getWorldMatrix();
 	translationMatrix = XMMatrixTranslation(lightPosition[0].x, lightPosition[0].y, lightPosition[0].z);
 	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
 	worldMatrix = scaleMatrix * translationMatrix;
 	sunlightMesh1->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
-	shadowShader->render(renderer->getDeviceContext(), sunlightMesh1->getIndexCount());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"));
+	textureShader->render(renderer->getDeviceContext(), sunlightMesh1->getIndexCount());
+
+	worldMatrix = renderer->getWorldMatrix();
+	translationMatrix = XMMatrixTranslation(lightPosition[1].x, lightPosition[1].y, lightPosition[1].z);
+	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	worldMatrix = scaleMatrix * translationMatrix;
+	sunlightMesh2->sendData(renderer->getDeviceContext());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"));
+	textureShader->render(renderer->getDeviceContext(), sunlightMesh2->getIndexCount());
 
 	// Render the shadow map ortho mesh
 	renderer->setZBuffer(false);
