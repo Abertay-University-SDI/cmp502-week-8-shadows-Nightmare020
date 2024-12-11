@@ -1,15 +1,16 @@
 
 Texture2D shaderTexture : register(t0);
-Texture2D depthMapTexture[2] : register(t1);
+Texture2D depthMapTexture2 : register(t1);
+Texture2D depthMapTexture1 : register(t2);
 
-SamplerState diffuseSampler  : register(s0);
+SamplerState diffuseSampler : register(s0);
 SamplerState shadowSampler : register(s1);
 
 cbuffer LightBuffer : register(b0)
 {
-	float4 ambient[2];
-	float4 diffuse[2];
-	float4 direction[2];
+    float4 ambient[2];
+    float4 diffuse[2];
+    float4 direction[2];
     float4 specularColour[2];
     float4 specularPower[2];
 };
@@ -18,7 +19,7 @@ struct InputType
 {
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
-	float3 normal : NORMAL;
+    float3 normal : NORMAL;
     float4 lightViewPos[2] : TEXCOORD1;
     float3 viewVector : TEXCOORD3;
 };
@@ -80,34 +81,49 @@ float4 main(InputType input) : SV_TARGET
 {
     float shadowMapBias = 0.01;
     float4 colour = float4(0.f, 0.f, 0.f, 1.f);
-    float4 specular = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
-
-    for (int i = 0; i < 2; ++i)
-    {        
-        // Calculate the projected texture coordinates.
-        float2 pTexCoord = getProjectiveCoords(input.lightViewPos[i]);
-	
-        float3 normalizedDir = normalize(-direction[i].xyz);
         
-        // Shadow test. Is or isn't in shadow
-        if (hasDepthData(pTexCoord))
+        // Calculate the projected texture coordinates.
+    float2 pTexCoord1 = getProjectiveCoords(input.lightViewPos[0]);
+    float2 pTexCoord2 = getProjectiveCoords(input.lightViewPos[1]);
+	
+    float3 normalizedDir1 = normalize(-direction[0].xyz);
+    float3 normalizedDir2 = normalize(-direction[1].xyz);
+        
+    // Shadow test. Is or isn't in shadow
+    if (hasDepthData(pTexCoord1) || hasDepthData(pTexCoord2))
+    {
+        // Initial shadow factor
+        float finalShadow = 1.0f;
+        
+        // Check shadow for the first light
+        if (isInShadow(depthMapTexture1, pTexCoord1, input.lightViewPos[0], shadowMapBias))
         {
-            // Has depth map data
-            if (!isInShadow(depthMapTexture[i], pTexCoord, input.lightViewPos[i], shadowMapBias))
-            {
-                // is NOT in shadow, therefore light
-                float4 directionalLightColour = ambient[i] + calculateLighting(normalizedDir, input.normal, diffuse[i]);
+            finalShadow *= 0.0f;
+        }
+        
+        if (isInShadow(depthMapTexture2, pTexCoord2, input.lightViewPos[1], shadowMapBias))
+        {
+            finalShadow *= 0.0f;
+        }
+        
+        // Has depth map data
+        if (finalShadow > 0.0f)
+        {
+            // is NOT in shadow, therefore light
+            float4 directionalLightColour1 = ambient[0] + calculateLighting(normalizedDir1, input.normal, diffuse[0]);
+            float4 directionalLightColour2 = ambient[1] + calculateLighting(normalizedDir2, input.normal, diffuse[1]);
             
-                // Calculate specular colour
-                specular = calculateSpecular(normalizedDir, input.normal, input.viewVector, specularColour[i], specularPower[i].x);
+            // Calculate specular colour
+            float4 specularColour1 = calculateSpecular(normalizedDir1, input.normal, input.viewVector, specularColour[0], specularPower[0].x);
+            float4 specularColour2 = calculateSpecular(normalizedDir2, input.normal, input.viewVector, specularColour[1], specularPower[1].x);
                 
-                // Add specular colour
-                directionalLightColour += specular;
+            // Add specular colour
+            directionalLightColour1 += specularColour1;
+            directionalLightColour2 += specularColour2;
                 
-                // Accumulate the light colour from this directional light
-                colour += directionalLightColour;
-            }
+            // Accumulate the light colour from this directional light
+            colour = directionalLightColour1 + directionalLightColour2;
         }
     }
     

@@ -321,7 +321,7 @@ void App1::finalPass()
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
 	XMMATRIX lightProjectionMatrix;
 
-	/** Handle first light **/
+	/** Handle lights **/
 
 	lightProjectionMatrix = lights[0]->getOrthoMatrix();
 
@@ -336,7 +336,7 @@ void App1::finalPass()
 	// Render floor
 	planeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"wood"), camera, shadowMap1->getDepthMapSRV(), lights, lightProjectionMatrix);
+		textureMgr->getTexture(L"wood"), camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render model
@@ -347,7 +347,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
 	model->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"ceramic"),
-		camera, shadowMap1->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube and sphere
@@ -357,7 +357,7 @@ void App1::finalPass()
 	worldMatrix = translationMatrix * scaleMatrix;
 	cubeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"),
-		camera, shadowMap1->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
 	worldMatrix = renderer->getWorldMatrix();
@@ -367,7 +367,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
 	sphereMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"),
-		camera, shadowMap1->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Render sun light sphere
@@ -377,7 +377,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * translationMatrix;
 	sunlightMesh1->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
-		camera, shadowMap1->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), sunlightMesh1->getIndexCount());
 
 	/** Handle second light **/
@@ -395,7 +395,7 @@ void App1::finalPass()
 	// Render floor
 	planeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"wood"), camera, shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		textureMgr->getTexture(L"wood"), camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render model
@@ -406,7 +406,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
 	model->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"ceramic"),
-		camera, shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube and sphere
@@ -416,7 +416,7 @@ void App1::finalPass()
 	worldMatrix = translationMatrix * scaleMatrix;
 	cubeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"),
-		camera, shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
 	worldMatrix = renderer->getWorldMatrix();
@@ -426,7 +426,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
 	sphereMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"),
-		camera, shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Render sun light sphere
@@ -436,7 +436,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * translationMatrix;
 	sunlightMesh2->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
-		camera, shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
 	shadowShader->render(renderer->getDeviceContext(), sunlightMesh2->getIndexCount());
 
 	// Render the shadow map ortho mesh

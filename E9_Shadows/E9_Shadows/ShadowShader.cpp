@@ -110,7 +110,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 
 
 void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, 
-	Camera* camera, ID3D11ShaderResourceView* depthMap, Light* light[], const XMMATRIX& lightProjection)
+	Camera* camera, ID3D11ShaderResourceView* depthMap1, ID3D11ShaderResourceView* depthMap2, Light* lights[], const XMMATRIX& lightProjection)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -130,7 +130,7 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	dataPtr->projection = tproj;
 	for (int i = 0; i < 2; ++i)
 	{
-		XMMATRIX tLightViewMatrix = XMMatrixTranspose(light[i]->getViewMatrix());
+		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
 		dataPtr->lightView[i] = tLightViewMatrix;
 		dataPtr->lightProjection[i] = tLightProjectionMatrix;
 	}
@@ -152,18 +152,19 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	lightPtr = (LightBufferType*)mappedResource.pData;
 	for (int i = 0; i < 2; ++i)
 	{
-		lightPtr->ambient[i] = light[i]->getAmbientColour();
-		lightPtr->diffuse[i] = light[i]->getDiffuseColour();
-		lightPtr->direction[i] = XMFLOAT4(light[i]->getDirection().x, light[i]->getDirection().y, light[i]->getDirection().z, 0.0f);
-		lightPtr->specularColour[i] = light[i]->getSpecularColour();
-		lightPtr->specularPower[i] = XMFLOAT4(light[i]->getSpecularPower(), 0.0f, 0.0f, 0.0f);
+		lightPtr->ambient[i] = lights[i]->getAmbientColour();
+		lightPtr->diffuse[i] = lights[i]->getDiffuseColour();
+		lightPtr->direction[i] = XMFLOAT4(lights[i]->getDirection().x, lights[i]->getDirection().y, lights[i]->getDirection().z, 0.0f);
+		lightPtr->specularColour[i] = lights[i]->getSpecularColour();
+		lightPtr->specularPower[i] = XMFLOAT4(lights[i]->getSpecularPower(), 0.0f, 0.0f, 0.0f);
 	}
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
-	deviceContext->PSSetShaderResources(1, 1, &depthMap);
+	deviceContext->PSSetShaderResources(1, 1, &depthMap1);
+	deviceContext->PSSetShaderResources(2, 1, &depthMap2);
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
 }
