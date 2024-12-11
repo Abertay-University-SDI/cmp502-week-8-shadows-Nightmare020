@@ -110,7 +110,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 
 
 void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, 
-	Camera* camera, ID3D11ShaderResourceView* depthMap1, ID3D11ShaderResourceView* depthMap2, Light* lights[], const XMMATRIX& lightProjection)
+	Camera* camera, ID3D11ShaderResourceView* depthMap1, ID3D11ShaderResourceView* depthMap2, Light* lights[], bool perspective)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -120,7 +120,6 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
-	XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lightProjection);
 	
 	// Lock the constant buffer so it can be written to.
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
@@ -131,6 +130,8 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < 2; ++i)
 	{
 		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
+		XMMATRIX tLightProjectionMatrix = perspective ? XMMatrixTranspose(lights[i]->getProjectionMatrix()) : XMMatrixTranspose(lights[i]->getOrthoMatrix());
+
 		dataPtr->lightView[i] = tLightViewMatrix;
 		dataPtr->lightProjection[i] = tLightProjectionMatrix;
 	}

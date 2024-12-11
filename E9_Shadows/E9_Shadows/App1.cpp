@@ -319,24 +319,15 @@ void App1::finalPass()
 	XMMATRIX worldMatrix = renderer->getWorldMatrix();
 	XMMATRIX viewMatrix = camera->getViewMatrix();
 	XMMATRIX projectionMatrix = renderer->getProjectionMatrix();
-	XMMATRIX lightProjectionMatrix;
 
 	/** Handle lights **/
-
-	lightProjectionMatrix = lights[0]->getOrthoMatrix();
-
-	if (usePerspectiveProjection)
-	{
-		lights[0]->generateProjectionMatrix(0.1f, 100.f);
-		lightProjectionMatrix = lights[0]->getProjectionMatrix();
-	}
 
 	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
 
 	// Render floor
 	planeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"wood"), camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		textureMgr->getTexture(L"wood"), camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
 	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
 
 	// Render model
@@ -347,7 +338,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
 	model->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"ceramic"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render cube and sphere
@@ -357,7 +348,7 @@ void App1::finalPass()
 	worldMatrix = translationMatrix * scaleMatrix;
 	cubeMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
 	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
 
 	worldMatrix = renderer->getWorldMatrix();
@@ -367,7 +358,7 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
 	sphereMesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
 	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
 
 	// Render sun light sphere
@@ -377,67 +368,8 @@ void App1::finalPass()
 	worldMatrix = scaleMatrix * translationMatrix;
 	sunlightMesh1->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
+		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, usePerspectiveProjection);
 	shadowShader->render(renderer->getDeviceContext(), sunlightMesh1->getIndexCount());
-
-	/** Handle second light **/
-
-	lightProjectionMatrix = lights[1]->getOrthoMatrix();
-
-	if (usePerspectiveProjection)
-	{
-		lights[1]->generateProjectionMatrix(0.1f, 100.f);
-		lightProjectionMatrix = lights[1]->getProjectionMatrix();
-	}
-
-	worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
-
-	// Render floor
-	planeMesh->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix,
-		textureMgr->getTexture(L"wood"), camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), planeMesh->getIndexCount());
-
-	// Render model
-	worldMatrix = renderer->getWorldMatrix();
-	translationMatrix = XMMatrixTranslation(0.f, 4.f, 20.f);
-	scaleMatrix = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	rotationMatrix = XMMatrixRotationY(XMConvertToRadians(teapotRotation));
-	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-	model->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"ceramic"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
-
-	// Render cube and sphere
-	worldMatrix = renderer->getWorldMatrix();
-	translationMatrix = XMMatrixTranslation(-3.f, 1.f, 5.f + cubePosition);
-	scaleMatrix = XMMatrixScaling(5.f, 5.f, 5.f);
-	worldMatrix = translationMatrix * scaleMatrix;
-	cubeMesh->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), cubeMesh->getIndexCount());
-
-	worldMatrix = renderer->getWorldMatrix();
-	translationMatrix = XMMatrixTranslation(20.f, 4.f, 15.f + spherePosition);
-	scaleMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
-	rotationMatrix = XMMatrixRotationX(XMConvertToRadians(sphereRotation));
-	worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-	sphereMesh->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"glass"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), sphereMesh->getIndexCount());
-
-	// Render sun light sphere
-	worldMatrix = renderer->getWorldMatrix();
-	translationMatrix = XMMatrixTranslation(lightPosition[1].x, lightPosition[1].y, lightPosition[1].z);
-	scaleMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
-	worldMatrix = scaleMatrix * translationMatrix;
-	sunlightMesh2->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"sun"),
-		camera, shadowMap1->getDepthMapSRV(), shadowMap2->getDepthMapSRV(), lights, lightProjectionMatrix);
-	shadowShader->render(renderer->getDeviceContext(), sunlightMesh2->getIndexCount());
 
 	// Render the shadow map ortho mesh
 	renderer->setZBuffer(false);
