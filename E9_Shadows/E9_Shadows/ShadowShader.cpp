@@ -112,7 +112,6 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 
 }
 
-
 void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, 
 	Camera* camera, ID3D11ShaderResourceView* depthMap1, ID3D11ShaderResourceView* depthMap2, Light* lights[], bool perspective)
 {

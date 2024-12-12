@@ -1,7 +1,7 @@
 
 Texture2D shaderTexture : register(t0);
-Texture2D depthMapTexture2 : register(t1);
-Texture2D depthMapTexture1 : register(t2);
+Texture2D depthMapTexture1 : register(t1);
+Texture2D depthMapTexture2 : register(t2);
 
 SamplerState diffuseSampler : register(s0);
 SamplerState shadowSampler[2] : register(s1);
@@ -81,7 +81,9 @@ float2 getProjectiveCoords(float4 lightViewPosition)
 
 float4 main(InputType input) : SV_TARGET
 {
-    float shadowMapBias = 0.01;
+    float shadowMapBias1 = max(0.01 * (1.0 - dot(input.normal, direction[0].xyz)), 0.005);
+    float shadowMapBias2 = max(0.01 * (1.0 - dot(input.normal, direction[1].xyz)), 0.005);
+    
     float4 colour = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
         
@@ -99,12 +101,12 @@ float4 main(InputType input) : SV_TARGET
         float finalShadow = 1.0f;
         
         // Check shadow for the first light
-        if (isInShadow(depthMapTexture1, shadowSampler[0], pTexCoord1, input.lightViewPos1, shadowMapBias))
+        if (isInShadow(depthMapTexture1, shadowSampler[0], pTexCoord1, input.lightViewPos1, shadowMapBias1))
         {
             finalShadow *= 0.0f;
         }
         
-        if (isInShadow(depthMapTexture2, shadowSampler[1], pTexCoord2, input.lightViewPos2, shadowMapBias))
+        if (isInShadow(depthMapTexture2, shadowSampler[1], pTexCoord2, input.lightViewPos2, shadowMapBias2))
         {
             finalShadow *= 0.0f;
         }
