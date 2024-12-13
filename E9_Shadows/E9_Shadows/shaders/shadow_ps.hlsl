@@ -96,38 +96,37 @@ float4 main(InputType input) : SV_TARGET
         
     // Shadow test. Is or isn't in shadow
     if (hasDepthData(pTexCoord1) || hasDepthData(pTexCoord2))
-    {
-        // Initial shadow factor
-        float finalShadow = 1.0f;
-        
-        // Check shadow for the first light
-        if (isInShadow(depthMapTexture1, shadowSampler[0], pTexCoord1, input.lightViewPos1, shadowMapBias1))
-        {
-            finalShadow *= 0.0f;
-        }
-        
-        if (isInShadow(depthMapTexture2, shadowSampler[1], pTexCoord2, input.lightViewPos2, shadowMapBias2))
-        {
-            finalShadow *= 0.0f;
-        }
-        
+    {   
         // Has depth map data
-        if (finalShadow > 0.0f)
+        if (!isInShadow(depthMapTexture1, shadowSampler[0], pTexCoord1, input.lightViewPos1, shadowMapBias1))
         {
             // is NOT in shadow, therefore light
             float4 directionalLightColour1 = ambient[0] + calculateLighting(normalizedDir1, input.normal, diffuse[0]);
-            float4 directionalLightColour2 = ambient[1] + calculateLighting(normalizedDir2, input.normal, diffuse[1]);
             
             // Calculate specular colour
             float4 specularColour1 = calculateSpecular(normalizedDir1, input.normal, input.viewVector, specularColour[0], specularPower[0].x);
-            float4 specularColour2 = calculateSpecular(normalizedDir2, input.normal, input.viewVector, specularColour[1], specularPower[1].x);
                 
             // Add specular colour
             directionalLightColour1 += specularColour1;
+                
+            // Accumulate the light colour from this directional light
+            colour += directionalLightColour1;
+        }
+        
+        // Has depth map data
+        if (!isInShadow(depthMapTexture2, shadowSampler[1], pTexCoord2, input.lightViewPos2, shadowMapBias2))
+        {
+            // is NOT in shadow, therefore light
+            float4 directionalLightColour2 = ambient[1] + calculateLighting(normalizedDir2, input.normal, diffuse[1]);
+            
+            // Calculate specular colour
+            float4 specularColour2 = calculateSpecular(normalizedDir2, input.normal, input.viewVector, specularColour[1], specularPower[1].x);
+                
+            // Add specular colour
             directionalLightColour2 += specularColour2;
                 
             // Accumulate the light colour from this directional light
-            colour = directionalLightColour1 + directionalLightColour2;
+            colour += directionalLightColour2;
         }
     }
     

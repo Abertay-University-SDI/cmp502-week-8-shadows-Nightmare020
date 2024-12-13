@@ -113,7 +113,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, 
-	Camera* camera, ID3D11ShaderResourceView* depthMap1, ID3D11ShaderResourceView* depthMap2, Light* lights[], bool perspective)
+	Camera* camera, ID3D11ShaderResourceView* depthMap1, ID3D11ShaderResourceView* depthMap2, Light* lights[], bool perspectiveView)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -133,7 +133,12 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < 2; ++i)
 	{
 		XMMATRIX tLightViewMatrix = XMMatrixTranspose(lights[i]->getViewMatrix());
-		XMMATRIX tLightProjectionMatrix = perspective ? XMMatrixTranspose(lights[i]->getProjectionMatrix()) : XMMatrixTranspose(lights[i]->getOrthoMatrix());
+		XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(lights[i]->getOrthoMatrix());
+
+		if (perspectiveView)
+		{
+			XMMatrixTranspose(lights[i]->getProjectionMatrix());
+		}
 
 		dataPtr->lightView[i] = tLightViewMatrix;
 		dataPtr->lightProjection[i] = tLightProjectionMatrix;
